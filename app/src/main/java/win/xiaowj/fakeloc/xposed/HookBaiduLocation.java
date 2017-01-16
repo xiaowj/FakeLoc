@@ -3,6 +3,7 @@ package win.xiaowj.fakeloc.xposed;
 import com.baidu.location.BDLocation;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
+import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
@@ -13,7 +14,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  * Created by user on 2017/1/4 004.
  */
 
-public class HookBaiduLocation implements IXposedHookLoadPackage {
+public class HookBaiduLocation implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
     private final String CLAZZ_NAME = "com.baidu.location.LocationClient";
     private XSharedPreferences xSharedPreferences;
@@ -24,9 +25,9 @@ public class HookBaiduLocation implements IXposedHookLoadPackage {
 
         String packageName = loadPackageParam.packageName;
 
-        xSharedPreferences = new XSharedPreferences("win.xiaowj.fakeloc", "app_conf");
-        xSharedPreferences.makeWorldReadable();
-        xSharedPreferences.reload();
+        if (xSharedPreferences.hasFileChanged()) {
+            xSharedPreferences.reload();
+        }
         XposedBridge.log("packageName hashCode " + loadPackageParam.packageName.hashCode());
         XposedBridge.log("package is openHook " + xSharedPreferences.getBoolean(loadPackageParam.packageName.hashCode() + "_openHook", false));
         if (!xSharedPreferences.getBoolean(loadPackageParam.packageName.hashCode() + "_openHook", false)) {
@@ -86,5 +87,11 @@ public class HookBaiduLocation implements IXposedHookLoadPackage {
 //                XposedBridge.log("开始Hook  onNewNotifyLocation");
 //            }
 //        });
+    }
+
+    @Override
+    public void initZygote(StartupParam startupParam) throws Throwable {
+        xSharedPreferences = new XSharedPreferences("win.xiaowj.fakeloc", "app_conf");
+        xSharedPreferences.makeWorldReadable();
     }
 }
